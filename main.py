@@ -2,9 +2,10 @@ from binascii import hexlify
 import sys, os
 
 # Save the parsing data to a file.
-def parsing(f,endian):
+def parsing(filename,f,endian):
     try:
         stdout = sys.stdout # Saves the output value in cmd
+        print (os.path.splitext(filename)[-2] + '.txt')
         sys.stdout = open(os.path.splitext(filename)[-2] + '.txt', 'w')
         print (endian)
         ffd8 = hexlify(f.read(2)).upper().decode()
@@ -133,53 +134,60 @@ def align(f):
         i+=2
 
 if __name__ == "__main__":
+    print ('Hello, world!')
     try:
         var1 = sys.argv[1] # receive argument
-        for (path, dir, files) in os.walk(var1): # Navigating inside a folder 
-            for filename in files:
-                ext = os.path.splitext(filename)[-1]
-                if ext == '.jpg' or ext == '.jpeg': # Extension check
-                    full_path = path+'/'+filename
-                    print ('[+] File Name : %s' %filename,end='')
+        jpegs = []
+        if os.path.isdir(var1):
+            for path, dir, files in os.walk(var1): # Navigating inside a folder 
+                for jpeg in files:
+                    jpegs.append(os.path.join(path, jpeg))
+        else:
+            jpegs.append(var1)
+        for full_path in jpegs:
+            filename = os.path.basename(full_path)
+            ext = os.path.splitext(filename)[-1]
+            if ext == '.jpg' or ext == '.jpeg': # Extension check
+                print ('[+] File Name : %s' %filename,end='')
 
-                    try:
-                        with open(full_path,'rb') as f:
-                            if f.read(2) == b'\xff\xd8':
-                                f.seek(0)
-                                align2 = align(f) # Check Endian
-                                if align2 == 0:
-                                    endian =  ('[+] byte align : little endian')
-                                    print ()
-                                    f.seek(0)
-                                    parsing(f,endian)
-                                    f.seek(0)
-                                    print_out(f,endian)
-                                if align2 == 1:
-                                    endian =  ('[+] byte align : Big endian')
-                                    print ()
-                                    f.seek(0)
-                                    parsing(f,endian)
-                                    f.seek(0)
-                                    print_out(f,endian)
-                                if align2 == 2:
-                                    endian = ('[+] byte align : Unknown')
-                                    print ()
-                                    f.seek(0)
-                                    parsing(f,endian)
-                                    f.seek(0)
-                                    print_out(f,endian)
-                            else :
-                                print ('It\'s not jpeg file')
-
+                try:
+                    with open(full_path,'rb') as f:
+                        if f.read(2) == b'\xff\xd8':
+                            f.seek(0)
+                            align2 = align(f) # Check Endian
+                            if align2 == 0:
+                                endian =  ('[+] byte align : little endian')
                                 print ()
-                                sys.exit(1)
-                    except Exception as e:
-                        print (e)
-                else:
-                    print ()
-                    print (path)
-                    print ('There is no \'.jpg\' or \'.jpeg\' in the Directory.')
-                    print ()
+                                f.seek(0)
+                                parsing(filename,f,endian)
+                                f.seek(0)
+                                print_out(f,endian)
+                            if align2 == 1:
+                                endian =  ('[+] byte align : Big endian')
+                                print ()
+                                f.seek(0)
+                                parsing(filename,f,endian)
+                                f.seek(0)
+                                print_out(f,endian)
+                            if align2 == 2:
+                                endian = ('[+] byte align : Unknown')
+                                print ()
+                                f.seek(0)
+                                parsing(filename,f,endian)
+                                f.seek(0)
+                                print_out(f,endian)
+                        else :
+                            print ('It\'s not jpeg file')
+
+                            print ()
+                            sys.exit(1)
+                except Exception as e:
+                    print (e)
+            else:
+                print ()
+                print (path)
+                print ('There is no \'.jpg\' or \'.jpeg\' in the Directory.')
+                print ()
     except Exception:
         print ()
         print ('      -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*')
